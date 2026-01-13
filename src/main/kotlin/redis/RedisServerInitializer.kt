@@ -7,6 +7,8 @@ class RedisServerInitializer : ChannelInitializer<SocketChannel>() {
     override fun initChannel(ch: SocketChannel) {
         ch.pipeline().apply {
             addLast(RedisProtocolDecoder())
+            addLast(RedisProtocolEncoder())
+            addLast(RedisCommandHandler())
         }
     }
 }
