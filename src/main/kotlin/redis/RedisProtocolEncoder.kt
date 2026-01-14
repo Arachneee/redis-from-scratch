@@ -11,6 +11,6 @@ class RedisProtocolEncoder : MessageToByteEncoder<RESPValue>() {
         msg: RESPValue,
         out: ByteBuf,
     ) {
-        out.writeBytes(msg.toRESP().toByteArray(Charsets.UTF_8))
+        out.writeBytes(msg.toRESP())
     }
 }

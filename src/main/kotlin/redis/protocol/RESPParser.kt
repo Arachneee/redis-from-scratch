@@ -40,9 +40,10 @@ class RESPParser {
 
         if (!hasBulkStringData(buffer, length)) return null
 
-        val message = buffer.readCharSequence(length, Charsets.UTF_8).toString()
+        val data = ByteArray(length)
+        buffer.readBytes(data)
         buffer.skipBytes(2)
-        return RESPValue.BulkString(message)
+        return RESPValue.BulkString(data)
     }
 
     private fun parseArray(buffer: ByteBuf): RESPValue.Array? {

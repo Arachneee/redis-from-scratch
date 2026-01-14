@@ -2,9 +2,12 @@ package redis
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
+import redis.command.CommandRegistry
 import redis.protocol.RESPValue
 
-class RedisCommandHandler : SimpleChannelInboundHandler<RESPValue>() {
+class RedisCommandHandler(
+    private val commandRegistry: CommandRegistry,
+) : SimpleChannelInboundHandler<RESPValue>() {
     override fun channelRead0(
         ctx: ChannelHandlerContext,
         msg: RESPValue,
@@ -12,12 +15,12 @@ class RedisCommandHandler : SimpleChannelInboundHandler<RESPValue>() {
         println("Received: $msg")
 
         if (msg is RESPValue.Array) {
-            val command = (msg.elements?.firstOrNull() as? RESPValue.BulkString)?.value?.uppercase()
-            val response = when (command) {
-                "COMMAND" -> RESPValue.Array(emptyList())
-                "PING" -> RESPValue.SimpleString("PONG")
-                else -> RESPValue.Error("ERR unknown command '$command'")
-            }
+            val commandName = msg.getCommand()
+            val response =
+                commandName
+                    ?.let { commandRegistry.find(it) }
+                    ?.execute(msg.elements ?: emptyList())
+                    ?: RESPValue.Error("ERR unknown command '$commandName'")
             ctx.writeAndFlush(response)
         }
     }
