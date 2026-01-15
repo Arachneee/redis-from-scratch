@@ -1,10 +1,12 @@
 package redis
 
+import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import redis.command.CommandRegistry
 import redis.protocol.RESPValue
 
+@Sharable
 class RedisCommandHandler(
     private val commandRegistry: CommandRegistry,
 ) : SimpleChannelInboundHandler<RESPValue>() {

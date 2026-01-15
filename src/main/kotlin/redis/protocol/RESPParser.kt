@@ -2,7 +2,7 @@ package redis.protocol
 
 import io.netty.buffer.ByteBuf
 
-class RESPParser {
+object RESPParser {
     fun parse(buffer: ByteBuf): RESPValue? {
         if (!buffer.isReadable) return null
 

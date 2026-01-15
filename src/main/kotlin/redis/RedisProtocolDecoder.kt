@@ -6,8 +6,6 @@ import io.netty.handler.codec.ByteToMessageDecoder
 import redis.protocol.RESPParser
 
 class RedisProtocolDecoder : ByteToMessageDecoder() {
-    private val parser = RESPParser()
-
     override fun decode(
         ctx: ChannelHandlerContext,
         buffer: ByteBuf,
@@ -16,7 +14,7 @@ class RedisProtocolDecoder : ByteToMessageDecoder() {
         while (buffer.isReadable) {
             buffer.markReaderIndex()
 
-            val result = parser.parse(buffer)
+            val result = RESPParser.parse(buffer)
             if (result == null) {
                 buffer.resetReaderIndex()
                 return
