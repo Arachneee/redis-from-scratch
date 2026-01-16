@@ -47,6 +47,24 @@ class RedisRepository {
         ttlMillis.remove(key)
     }
 
+    fun setWithTtlSeconds(
+        key: String,
+        value: ByteArray,
+        ttlSeconds: Long,
+    ) {
+        store[key] = value
+        setTtlMillis(key, ttlSeconds * 1000)
+    }
+
+    fun setWithTtlMillis(
+        key: String,
+        value: ByteArray,
+        ttlMillis: Long,
+    ) {
+        store[key] = value
+        setTtlMillis(key, ttlMillis)
+    }
+
     fun delete(key: String): Long {
         val removed = store.remove(key)
         ttlMillis.remove(key)
@@ -62,7 +80,7 @@ class RedisRepository {
         if (!store.containsKey(key)) return 0
         if (seconds <= 0) return delete(key)
 
-        ttlMillis[key] = seconds * 1000 + System.currentTimeMillis()
+        setTtlMillis(key, seconds * 1000)
         return 1
     }
 
@@ -78,6 +96,13 @@ class RedisRepository {
             return KEY_NOT_EXISTS
         }
         return (remainingMillis + 999) / 1000
+    }
+
+    private fun setTtlMillis(
+        key: String,
+        ttlMillis: Long,
+    ) {
+        this.ttlMillis[key] = ttlMillis + System.currentTimeMillis()
     }
 
     companion object {

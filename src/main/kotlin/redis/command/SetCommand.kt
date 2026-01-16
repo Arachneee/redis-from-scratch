@@ -18,7 +18,27 @@ class SetCommand(
     override fun execute(args: List<RESPValue>): RESPValue {
         val key = args.getStringAt(1) ?: return wrongArgsError()
         val value = args.getBytesAt(2) ?: return wrongArgsError()
-        repository.set(key, value)
-        return RESPValue.SimpleString("OK")
+
+        val option = args.getStringAt(3)?.uppercase()
+        if (option == null) {
+            repository.set(key, value)
+            return OK
+        }
+
+        val ttl = args.getStringAt(4)?.toLongOrNull() ?: return wrongArgsError()
+        if (ttl <= 0) return wrongArgsError()
+
+        when (option) {
+            OPTION_EX -> repository.setWithTtlSeconds(key, value, ttl)
+            OPTION_PX -> repository.setWithTtlMillis(key, value, ttl)
+            else -> return wrongArgsError()
+        }
+        return OK
+    }
+
+    companion object {
+        private const val OPTION_EX = "EX"
+        private const val OPTION_PX = "PX"
+        private val OK = RESPValue.SimpleString("OK")
     }
 }
