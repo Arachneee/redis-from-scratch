@@ -1,4 +1,4 @@
-package redis
+package redis.server
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
@@ -11,14 +11,15 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import org.slf4j.LoggerFactory
+import redis.config.RedisConfig
+import redis.storage.KeyExpirationScheduler
+import redis.storage.RedisRepository
 import java.util.concurrent.TimeUnit
 
 class RedisServer(
-    private val port: Int = DEFAULT_PORT,
+    private val config: RedisConfig = RedisConfig(),
     private val repository: RedisRepository = RedisRepository(),
-    private val keyExpirationScheduler: KeyExpirationScheduler = KeyExpirationScheduler(repository),
-    private val shutdownQuietPeriodMs: Long = DEFAULT_SHUTDOWN_QUIET_PERIOD_MS,
-    private val shutdownTimeoutMs: Long = DEFAULT_SHUTDOWN_TIMEOUT_MS,
+    private val keyExpirationScheduler: KeyExpirationScheduler = KeyExpirationScheduler(repository, config),
 ) {
     private val logger = LoggerFactory.getLogger(RedisServer::class.java)
 
@@ -36,13 +37,13 @@ class RedisServer(
             bootstrap
                 .group(bossGroup, workerGroup)
                 .channel(serverChannelClass)
-                .option(ChannelOption.SO_BACKLOG, SO_BACKLOG)
+                .option(ChannelOption.SO_BACKLOG, config.soBacklog)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .childHandler(RedisServerInitializer(repository))
 
-            channel = bootstrap.bind(port).sync().channel()
-            logger.info("Redis server started on port $port")
+            channel = bootstrap.bind(config.port).sync().channel()
+            logger.info("Redis server started on port ${config.port}")
 
             keyExpirationScheduler.start(workerGroup)
 
@@ -55,18 +56,20 @@ class RedisServer(
     fun shutdown() {
         logger.info("Shutting down redis server...")
         channel?.close()?.sync()
-        workerGroup.shutdownGracefully(shutdownQuietPeriodMs, shutdownTimeoutMs, TimeUnit.MILLISECONDS).sync()
-        bossGroup.shutdownGracefully(shutdownQuietPeriodMs, shutdownTimeoutMs, TimeUnit.MILLISECONDS).sync()
+        workerGroup
+            .shutdownGracefully(
+                config.shutdownQuietPeriodMs,
+                config.shutdownTimeoutMs,
+                TimeUnit.MILLISECONDS,
+            ).sync()
+        bossGroup
+            .shutdownGracefully(
+                config.shutdownQuietPeriodMs,
+                config.shutdownTimeoutMs,
+                TimeUnit.MILLISECONDS,
+            ).sync()
         logger.info("Redis server stopped")
     }
 
-    private fun createEventLoopGroup(): EventLoopGroup =
-        if (useEpoll) EpollEventLoopGroup(1) else NioEventLoopGroup(1)
-
-    companion object {
-        private const val DEFAULT_PORT = 6379
-        private const val DEFAULT_SHUTDOWN_QUIET_PERIOD_MS = 100L
-        private const val DEFAULT_SHUTDOWN_TIMEOUT_MS = 5000L
-        private const val SO_BACKLOG = 1024
-    }
+    private fun createEventLoopGroup(): EventLoopGroup = if (useEpoll) EpollEventLoopGroup(1) else NioEventLoopGroup(1)
 }

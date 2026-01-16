@@ -1,8 +1,11 @@
-package redis
+package redis.server
 
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 import redis.command.CommandRegistry
+import redis.protocol.RedisProtocolDecoder
+import redis.protocol.RedisProtocolEncoder
+import redis.storage.RedisRepository
 
 class RedisServerInitializer(
     repository: RedisRepository,

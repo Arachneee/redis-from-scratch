@@ -1,9 +1,8 @@
-package redis
+package redis.protocol
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
-import redis.protocol.RESPParser
 
 class RedisProtocolDecoder : ByteToMessageDecoder() {
     override fun decode(

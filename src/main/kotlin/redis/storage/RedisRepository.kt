@@ -1,4 +1,4 @@
-package redis
+package redis.storage
 
 /**
  * Redis 키-값 저장소.
@@ -6,35 +6,37 @@ package redis
  * 이 클래스는 thread-safe하지 않으며, 단일 스레드(Netty EventLoop) 환경에서만 사용해야 한다.
  * 멀티스레드 환경에서 사용할 경우 외부에서 동기화를 보장해야 한다.
  */
-class RedisRepository {
+class RedisRepository(
+    private val clock: Clock = SystemClock,
+) {
     private val store = HashMap<String, ByteArray>()
-    private val ttlMillis = HashMap<String, Long>()
+    private val expirationTimes = HashMap<String, Long>()
 
     fun cleanupExpiredKeys(): Boolean {
-        val keys = ttlMillis.keys.toList()
+        val keys = expirationTimes.keys.toList()
         if (keys.isEmpty()) return false
 
-        val now = System.currentTimeMillis()
+        val now = clock.currentTimeMillis()
         val randomKeys = keys.shuffled().take(TTL_EXPIRE_SAMPLES)
 
         val count =
             randomKeys
                 .asSequence()
-                .filter { ttlMillis.getOrDefault(it, Long.MAX_VALUE) < now }
+                .filter { expirationTimes.getOrDefault(it, Long.MAX_VALUE) < now }
                 .onEach {
                     store.remove(it)
-                    ttlMillis.remove(it)
+                    expirationTimes.remove(it)
                 }.count()
 
         return count > TTL_EXPIRE_SAMPLES / 4
     }
 
     fun get(key: String): ByteArray? {
-        if (ttlMillis.getOrDefault(key, Long.MAX_VALUE) > System.currentTimeMillis()) {
+        if (expirationTimes.getOrDefault(key, Long.MAX_VALUE) > clock.currentTimeMillis()) {
             return store[key]
         } else {
             store.remove(key)
-            ttlMillis.remove(key)
+            expirationTimes.remove(key)
             return null
         }
     }
@@ -44,7 +46,7 @@ class RedisRepository {
         value: ByteArray,
     ) {
         store[key] = value
-        ttlMillis.remove(key)
+        expirationTimes.remove(key)
     }
 
     fun setWithTtlSeconds(
@@ -53,7 +55,7 @@ class RedisRepository {
         ttlSeconds: Long,
     ) {
         store[key] = value
-        setTtlMillis(key, ttlSeconds * 1000)
+        setExpiration(key, ttlSeconds * 1000)
     }
 
     fun setWithTtlMillis(
@@ -62,12 +64,12 @@ class RedisRepository {
         ttlMillis: Long,
     ) {
         store[key] = value
-        setTtlMillis(key, ttlMillis)
+        setExpiration(key, ttlMillis)
     }
 
     fun delete(key: String): Long {
         val removed = store.remove(key)
-        ttlMillis.remove(key)
+        expirationTimes.remove(key)
         return if (removed != null) 1 else 0
     }
 
@@ -80,29 +82,29 @@ class RedisRepository {
         if (!store.containsKey(key)) return 0
         if (seconds <= 0) return delete(key)
 
-        setTtlMillis(key, seconds * 1000)
+        setExpiration(key, seconds * 1000)
         return 1
     }
 
     fun ttl(key: String): Long {
-        val expireAt = ttlMillis[key]
+        val expireAt = expirationTimes[key]
         if (!store.containsKey(key)) return KEY_NOT_EXISTS
         if (expireAt == null) return NO_TTL
 
-        val remainingMillis = expireAt - System.currentTimeMillis()
+        val remainingMillis = expireAt - clock.currentTimeMillis()
         if (remainingMillis <= 0) {
             store.remove(key)
-            ttlMillis.remove(key)
+            expirationTimes.remove(key)
             return KEY_NOT_EXISTS
         }
         return (remainingMillis + 999) / 1000
     }
 
-    private fun setTtlMillis(
+    private fun setExpiration(
         key: String,
         ttlMillis: Long,
     ) {
-        this.ttlMillis[key] = ttlMillis + System.currentTimeMillis()
+        expirationTimes[key] = ttlMillis + clock.currentTimeMillis()
     }
 
     companion object {
