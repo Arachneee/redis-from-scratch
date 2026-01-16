@@ -100,6 +100,154 @@ class RedisRepository(
         return (remainingMillis + 999) / 1000
     }
 
+    fun exists(keys: Collection<String>): Long =
+        keys.count { key ->
+            val expireAt = expirationTimes[key]
+            if (expireAt != null && expireAt <= clock.currentTimeMillis()) {
+                store.remove(key)
+                expirationTimes.remove(key)
+                false
+            } else {
+                store.containsKey(key)
+            }
+        }.toLong()
+
+    fun size(): Long = store.size.toLong()
+
+    fun flushAll() {
+        store.clear()
+        expirationTimes.clear()
+    }
+
+    fun persist(key: String): Long {
+        if (!store.containsKey(key)) return 0
+        val removed = expirationTimes.remove(key)
+        return if (removed != null) 1 else 0
+    }
+
+    fun incr(key: String): Result<Long> = incrBy(key, 1)
+
+    fun decr(key: String): Result<Long> = incrBy(key, -1)
+
+    fun incrBy(key: String, delta: Long): Result<Long> {
+        val current = get(key)
+        val currentValue = if (current == null) {
+            0L
+        } else {
+            current.toString(Charsets.UTF_8).toLongOrNull()
+                ?: return Result.failure(NotAnIntegerException())
+        }
+        val newValue = currentValue + delta
+        store[key] = newValue.toString().toByteArray()
+        return Result.success(newValue)
+    }
+
+    fun setNx(key: String, value: ByteArray): Boolean {
+        if (isExpired(key)) {
+            removeKey(key)
+        }
+        if (store.containsKey(key)) return false
+        store[key] = value
+        return true
+    }
+
+    fun mGet(keys: List<String>): List<ByteArray?> = keys.map { get(it) }
+
+    fun mSet(entries: Map<String, ByteArray>) {
+        entries.forEach { (key, value) ->
+            store[key] = value
+            expirationTimes.remove(key)
+        }
+    }
+
+    fun pttl(key: String): Long {
+        val expireAt = expirationTimes[key]
+        if (!store.containsKey(key)) return KEY_NOT_EXISTS
+        if (expireAt == null) return NO_TTL
+
+        val remainingMillis = expireAt - clock.currentTimeMillis()
+        if (remainingMillis <= 0) {
+            removeKey(key)
+            return KEY_NOT_EXISTS
+        }
+        return remainingMillis
+    }
+
+    fun pexpire(key: String, millis: Long): Long {
+        if (!store.containsKey(key)) return 0
+        if (millis <= 0) return delete(key)
+
+        setExpiration(key, millis)
+        return 1
+    }
+
+    fun keys(pattern: String): List<String> {
+        cleanupExpiredKeysForIteration()
+        val regex = patternToRegex(pattern)
+        return store.keys.filter { regex.matches(it) }
+    }
+
+    fun scan(cursor: Long, pattern: String?, count: Int): Pair<Long, List<String>> {
+        cleanupExpiredKeysForIteration()
+        val allKeys = store.keys.toList().sorted()
+        if (allKeys.isEmpty()) return Pair(0L, emptyList())
+
+        val startIndex = cursor.toInt().coerceIn(0, allKeys.size)
+        val regex = pattern?.let { patternToRegex(it) }
+
+        val result = mutableListOf<String>()
+        var index = startIndex
+        var scanned = 0
+
+        while (scanned < count && index < allKeys.size) {
+            val key = allKeys[index]
+            if (regex == null || regex.matches(key)) {
+                result.add(key)
+            }
+            index++
+            scanned++
+        }
+
+        val nextCursor = if (index >= allKeys.size) 0L else index.toLong()
+        return Pair(nextCursor, result)
+    }
+
+    private fun isExpired(key: String): Boolean {
+        val expireAt = expirationTimes[key] ?: return false
+        return expireAt <= clock.currentTimeMillis()
+    }
+
+    private fun removeKey(key: String) {
+        store.remove(key)
+        expirationTimes.remove(key)
+    }
+
+    private fun cleanupExpiredKeysForIteration() {
+        val expiredKeys = expirationTimes.entries
+            .filter { it.value <= clock.currentTimeMillis() }
+            .map { it.key }
+        expiredKeys.forEach { removeKey(it) }
+    }
+
+    private fun patternToRegex(pattern: String): Regex {
+        val regexPattern = buildString {
+            append("^")
+            for (char in pattern) {
+                when (char) {
+                    '*' -> append(".*")
+                    '?' -> append(".")
+                    '[', ']', '(', ')', '{', '}', '.', '+', '^', '$', '|', '\\' -> {
+                        append("\\")
+                        append(char)
+                    }
+                    else -> append(char)
+                }
+            }
+            append("$")
+        }
+        return regexPattern.toRegex()
+    }
+
     private fun setExpiration(
         key: String,
         ttlMillis: Long,
