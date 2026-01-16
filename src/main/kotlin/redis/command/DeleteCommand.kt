@@ -1,6 +1,6 @@
 package redis.command
 
-import redis.RedisRepository
+import redis.storage.RedisRepository
 import redis.protocol.RESPValue
 import redis.protocol.getStringsFrom
 

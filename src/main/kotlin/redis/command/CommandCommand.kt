@@ -1,5 +1,6 @@
 package redis.command
 
+import redis.error.RedisErrors
 import redis.protocol.RESPValue
 import redis.protocol.getStringAt
 
@@ -21,16 +22,23 @@ class CommandCommand(
                 val commands = commandsProvider()
                 RESPValue.Array(commands.map { it.toCommandInfo() })
             }
+
             "COUNT" -> {
                 val commands = commandsProvider()
                 RESPValue.Integer(commands.size.toLong())
             }
+
             // TODO: COMMAND DOCS는 각 명령어의 상세 문서를 Map 형태로 반환해야 함
-            "DOCS" -> RESPValue.Array(emptyList())
+            "DOCS" -> {
+                RESPValue.Array(emptyList())
+            }
+
             "INFO" -> {
                 val commands = commandsProvider()
-                val requestedCommands = args.drop(2)
-                    .mapNotNull { (it as? RESPValue.BulkString)?.asString?.uppercase() }
+                val requestedCommands =
+                    args
+                        .drop(2)
+                        .mapNotNull { (it as? RESPValue.BulkString)?.asString?.uppercase() }
                 if (requestedCommands.isEmpty()) {
                     RESPValue.Array(commands.map { it.toCommandInfo() })
                 } else {
@@ -38,7 +46,10 @@ class CommandCommand(
                     RESPValue.Array(filtered.map { it.toCommandInfo() })
                 }
             }
-            else -> RESPValue.Error("ERR unknown subcommand '$subCommand'")
+
+            else -> {
+                RedisErrors.unknownSubcommand(subCommand)
+            }
         }
     }
 }

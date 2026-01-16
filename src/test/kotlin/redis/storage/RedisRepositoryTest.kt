@@ -1,15 +1,17 @@
-package redis
+package redis.storage
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class RedisRepositoryTest {
+    private lateinit var clock: FakeClock
     private lateinit var repository: RedisRepository
 
     @BeforeEach
     fun setUp() {
-        repository = RedisRepository()
+        clock = FakeClock()
+        repository = RedisRepository(clock)
     }
 
     @Test
@@ -79,7 +81,7 @@ class RedisRepositoryTest {
 
         assertThat(repository.get("key")).isNotNull
 
-        Thread.sleep(1100)
+        clock.advanceBy(1001)
 
         assertThat(repository.get("key")).isNull()
     }
@@ -91,7 +93,7 @@ class RedisRepositoryTest {
             repository.expire("key-$index", 1)
         }
 
-        Thread.sleep(1100)
+        clock.advanceBy(1001)
 
         var needsMoreCleanup = repository.cleanupExpiredKeys()
         while (needsMoreCleanup) {
@@ -110,7 +112,7 @@ class RedisRepositoryTest {
 
         repository.set("key", "new-value".toByteArray())
 
-        Thread.sleep(1100)
+        clock.advanceBy(1001)
 
         assertThat(repository.get("key")).isNotNull
         assertThat(String(repository.get("key")!!)).isEqualTo("new-value")
@@ -128,5 +130,49 @@ class RedisRepositoryTest {
         assertThat(repository.get("key1")).isNull()
         assertThat(repository.get("key2")).isNull()
         assertThat(repository.get("key3")).isNotNull
+    }
+
+    @Test
+    fun `ttl은 남은 시간을 초 단위로 반환한다`() {
+        repository.set("key", "value".toByteArray())
+        repository.expire("key", 10)
+
+        clock.advanceBy(3000)
+
+        assertThat(repository.ttl("key")).isEqualTo(7)
+    }
+
+    @Test
+    fun `ttl은 TTL이 설정되지 않은 키에 대해 -1을 반환한다`() {
+        repository.set("key", "value".toByteArray())
+
+        assertThat(repository.ttl("key")).isEqualTo(-1)
+    }
+
+    @Test
+    fun `ttl은 존재하지 않는 키에 대해 -2를 반환한다`() {
+        assertThat(repository.ttl("non-existent")).isEqualTo(-2)
+    }
+
+    @Test
+    fun `setWithTtlSeconds는 TTL과 함께 값을 저장한다`() {
+        repository.setWithTtlSeconds("key", "value".toByteArray(), 5)
+
+        assertThat(repository.get("key")).isNotNull
+
+        clock.advanceBy(5001)
+
+        assertThat(repository.get("key")).isNull()
+    }
+
+    @Test
+    fun `setWithTtlMillis는 밀리초 TTL과 함께 값을 저장한다`() {
+        repository.setWithTtlMillis("key", "value".toByteArray(), 500)
+
+        assertThat(repository.get("key")).isNotNull
+
+        clock.advanceBy(501)
+
+        assertThat(repository.get("key")).isNull()
     }
 }

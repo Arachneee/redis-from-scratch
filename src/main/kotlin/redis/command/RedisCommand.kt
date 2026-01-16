@@ -1,5 +1,6 @@
 package redis.command
 
+import redis.error.RedisErrors
 import redis.protocol.RESPValue
 
 interface RedisCommand {
@@ -12,8 +13,7 @@ interface RedisCommand {
 
     fun execute(args: List<RESPValue>): RESPValue
 
-    fun wrongArgsError(): RESPValue.Error =
-        RESPValue.Error("ERR wrong number of arguments for '${name.lowercase()}' command")
+    fun wrongArgsError(): RESPValue.Error = RedisErrors.wrongNumberOfArguments(name.lowercase())
 
     fun toCommandInfo(): RESPValue.Array =
         RESPValue.Array(
