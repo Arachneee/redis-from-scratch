@@ -1,36 +1,32 @@
 package redis
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
-
+/**
+ * Redis 키-값 저장소.
+ *
+ * 이 클래스는 thread-safe하지 않으며, 단일 스레드(Netty EventLoop) 환경에서만 사용해야 한다.
+ * 멀티스레드 환경에서 사용할 경우 외부에서 동기화를 보장해야 한다.
+ */
 class RedisRepository {
-    private val store = ConcurrentHashMap<String, ByteArray>()
-    private val ttlMillis = ConcurrentHashMap<String, Long>()
-    private val cleanupScope = CoroutineScope(Dispatchers.Default)
+    private val store = HashMap<String, ByteArray>()
+    private val ttlMillis = HashMap<String, Long>()
 
-    init {
-        cleanupScope.launch {
-            while (true) {
-                val now = System.currentTimeMillis()
-                val randomKeys = ttlMillis.keys.shuffled().take(TTL_EXPIRE_SAMPLES)
+    fun cleanupExpiredKeys(): Boolean {
+        val keys = ttlMillis.keys.toList()
+        if (keys.isEmpty()) return false
 
-                val count =
-                    randomKeys
-                        .asSequence()
-                        .filter { ttlMillis.getOrDefault(it, Long.MAX_VALUE) < now }
-                        .onEach {
-                            store.remove(it)
-                            ttlMillis.remove(it)
-                        }.count()
+        val now = System.currentTimeMillis()
+        val randomKeys = keys.shuffled().take(TTL_EXPIRE_SAMPLES)
 
-                if (count == 0 || count <= TTL_EXPIRE_SAMPLES / 4) {
-                    delay(100)
-                }
-            }
-        }
+        val count =
+            randomKeys
+                .asSequence()
+                .filter { ttlMillis.getOrDefault(it, Long.MAX_VALUE) < now }
+                .onEach {
+                    store.remove(it)
+                    ttlMillis.remove(it)
+                }.count()
+
+        return count > TTL_EXPIRE_SAMPLES / 4
     }
 
     fun get(key: String): ByteArray? {
@@ -52,10 +48,9 @@ class RedisRepository {
     }
 
     fun delete(key: String): Long {
-        if (!store.containsKey(key)) return 0
-        store.remove(key)
+        val removed = store.remove(key)
         ttlMillis.remove(key)
-        return 1
+        return if (removed != null) 1 else 0
     }
 
     fun delete(keys: Collection<String>): Long = keys.sumOf { delete(it) }

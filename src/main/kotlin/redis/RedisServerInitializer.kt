@@ -4,9 +4,10 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 import redis.command.CommandRegistry
 
-class RedisServerInitializer : ChannelInitializer<SocketChannel>() {
+class RedisServerInitializer(
+    repository: RedisRepository,
+) : ChannelInitializer<SocketChannel>() {
     private val encoder = RedisProtocolEncoder()
-    private val repository = RedisRepository()
     private val commandRegistry = CommandRegistry(repository)
     private val commandHandler = RedisCommandHandler(commandRegistry)
 
