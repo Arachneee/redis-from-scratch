@@ -15,17 +15,33 @@ class RedisRepository {
         cleanupScope.launch {
             while (true) {
                 val now = System.currentTimeMillis()
-                ttlMillis.entries.removeIf { (key, expireAt) ->
-                    val expired = expireAt < now
-                    if (expired) store.remove(key)
-                    expired
+                val randomKeys = ttlMillis.keys.shuffled().take(TTL_EXPIRE_SAMPLES)
+
+                val count =
+                    randomKeys
+                        .asSequence()
+                        .filter { ttlMillis.getOrDefault(it, Long.MAX_VALUE) < now }
+                        .onEach {
+                            store.remove(it)
+                            ttlMillis.remove(it)
+                        }.count()
+
+                if (count == 0 || count <= TTL_EXPIRE_SAMPLES / 4) {
+                    delay(100)
                 }
-                delay(100)
             }
         }
     }
 
-    fun get(key: String): ByteArray? = store[key]
+    fun get(key: String): ByteArray? {
+        if (ttlMillis.getOrDefault(key, Long.MAX_VALUE) > System.currentTimeMillis()) {
+            return store[key]
+        } else {
+            store.remove(key)
+            ttlMillis.remove(key)
+            return null
+        }
+    }
 
     fun set(
         key: String,
@@ -53,5 +69,9 @@ class RedisRepository {
 
         ttlMillis[key] = seconds * 1000 + System.currentTimeMillis()
         return 1
+    }
+
+    companion object {
+        private const val TTL_EXPIRE_SAMPLES = 20
     }
 }
