@@ -2,6 +2,8 @@ package redis.command
 
 import redis.RedisRepository
 import redis.protocol.RESPValue
+import redis.protocol.getBytesAt
+import redis.protocol.getStringAt
 
 class SetCommand(
     private val repository: RedisRepository,
@@ -14,11 +16,8 @@ class SetCommand(
     override val step: Int = 1
 
     override fun execute(args: List<RESPValue>): RESPValue {
-        val key = (args.getOrNull(1) as? RESPValue.BulkString)?.asString
-        val value = (args.getOrNull(2) as? RESPValue.BulkString)?.data
-        if (key == null || value == null) {
-            return RESPValue.Error("ERR wrong number of arguments for 'set' command")
-        }
+        val key = args.getStringAt(1) ?: return wrongArgsError()
+        val value = args.getBytesAt(2) ?: return wrongArgsError()
         repository.set(key, value)
         return RESPValue.SimpleString("OK")
     }

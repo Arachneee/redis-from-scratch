@@ -1,5 +1,14 @@
 package redis.protocol
 
+fun List<RESPValue>.getStringAt(index: Int): String? =
+    (getOrNull(index) as? RESPValue.BulkString)?.asString
+
+fun List<RESPValue>.getBytesAt(index: Int): ByteArray? =
+    (getOrNull(index) as? RESPValue.BulkString)?.data
+
+fun List<RESPValue>.getStringsFrom(startIndex: Int): List<String> =
+    drop(startIndex).mapNotNull { (it as? RESPValue.BulkString)?.asString }
+
 sealed class RESPValue {
     data class SimpleString(
         val value: String,

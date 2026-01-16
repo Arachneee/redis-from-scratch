@@ -12,14 +12,18 @@ interface RedisCommand {
 
     fun execute(args: List<RESPValue>): RESPValue
 
-    fun toCommandInfo(): RESPValue.Array = RESPValue.Array(
-        listOf(
-            RESPValue.BulkString(name.lowercase().toByteArray()),
-            RESPValue.Integer(arity.toLong()),
-            RESPValue.Array(flags.map { RESPValue.BulkString(it.toByteArray()) }),
-            RESPValue.Integer(firstKey.toLong()),
-            RESPValue.Integer(lastKey.toLong()),
-            RESPValue.Integer(step.toLong())
+    fun wrongArgsError(): RESPValue.Error =
+        RESPValue.Error("ERR wrong number of arguments for '${name.lowercase()}' command")
+
+    fun toCommandInfo(): RESPValue.Array =
+        RESPValue.Array(
+            listOf(
+                RESPValue.BulkString(name.lowercase().toByteArray()),
+                RESPValue.Integer(arity.toLong()),
+                RESPValue.Array(flags.map { RESPValue.BulkString(it.toByteArray()) }),
+                RESPValue.Integer(firstKey.toLong()),
+                RESPValue.Integer(lastKey.toLong()),
+                RESPValue.Integer(step.toLong()),
+            ),
         )
-    )
 }

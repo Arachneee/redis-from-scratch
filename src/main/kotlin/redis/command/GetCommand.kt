@@ -2,6 +2,7 @@ package redis.command
 
 import redis.RedisRepository
 import redis.protocol.RESPValue
+import redis.protocol.getStringAt
 
 class GetCommand(
     private val repository: RedisRepository,
@@ -14,8 +15,7 @@ class GetCommand(
     override val step: Int = 1
 
     override fun execute(args: List<RESPValue>): RESPValue {
-        val key = (args.getOrNull(1) as? RESPValue.BulkString)?.asString
-            ?: return RESPValue.Error("ERR wrong number of arguments for 'get' command")
+        val key = args.getStringAt(1) ?: return wrongArgsError()
         val value = repository.get(key)
         return RESPValue.BulkString(value)
     }

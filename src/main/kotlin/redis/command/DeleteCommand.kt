@@ -2,11 +2,12 @@ package redis.command
 
 import redis.RedisRepository
 import redis.protocol.RESPValue
+import redis.protocol.getStringsFrom
 
 class DeleteCommand(
     private val repository: RedisRepository,
 ) : RedisCommand {
-    override val name: String = "DELETE"
+    override val name: String = "DEL"
     override val arity: Int = -2
     override val flags: List<String> = listOf("write")
     override val firstKey: Int = 1
@@ -14,9 +15,11 @@ class DeleteCommand(
     override val step: Int = 1
 
     override fun execute(args: List<RESPValue>): RESPValue {
-        val key = (args.getOrNull(1) as? RESPValue.BulkString)?.asString
-            ?: return RESPValue.Error("ERR wrong number of arguments for 'delete' command")
-        val count = repository.delete(key)
-        return RESPValue.SimpleString("$count")
+        val keys = args.getStringsFrom(1)
+        if (keys.isEmpty()) {
+            return wrongArgsError()
+        }
+        val count = repository.delete(keys)
+        return RESPValue.Integer(count)
     }
 }
