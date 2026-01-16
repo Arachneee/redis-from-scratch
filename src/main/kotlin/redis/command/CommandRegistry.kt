@@ -8,12 +8,15 @@ class CommandRegistry(
     private val commands: Map<String, RedisCommand>
 
     init {
-        val baseCommands = listOf(
-            GetCommand(repository),
-            SetCommand(repository),
-            DeleteCommand(repository),
-            PingCommand()
-        )
+        val baseCommands =
+            listOf(
+                GetCommand(repository),
+                SetCommand(repository),
+                DeleteCommand(repository),
+                ExpireCommand(repository),
+                TtlCommand(repository),
+                PingCommand(),
+            )
         val commandCommand = CommandCommand { commands.values.toList() }
         commands = (baseCommands + commandCommand).associateBy { it.name }
     }

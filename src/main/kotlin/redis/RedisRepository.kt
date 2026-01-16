@@ -66,7 +66,23 @@ class RedisRepository {
         return 1
     }
 
+    fun ttl(key: String): Long {
+        val expireAt = ttlMillis[key]
+        if (!store.containsKey(key)) return KEY_NOT_EXISTS
+        if (expireAt == null) return NO_TTL
+
+        val remainingMillis = expireAt - System.currentTimeMillis()
+        if (remainingMillis <= 0) {
+            store.remove(key)
+            ttlMillis.remove(key)
+            return KEY_NOT_EXISTS
+        }
+        return (remainingMillis + 999) / 1000
+    }
+
     companion object {
+        private const val KEY_NOT_EXISTS = -2L
+        private const val NO_TTL = -1L
         private const val TTL_EXPIRE_SAMPLES = 20
     }
 }
