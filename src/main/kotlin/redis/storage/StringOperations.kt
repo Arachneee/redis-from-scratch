@@ -6,20 +6,19 @@ class StringOperations(
     private val store: RedisStore,
 ) {
     fun get(key: String): ByteArray? {
-        if (store.expirationTimes.getOrDefault(key, Long.MAX_VALUE) > store.clock.currentTimeMillis()) {
-            val value = store.data[key] ?: return null
-            if (value is ByteArray) {
-                return value
-            }
-            throw WrongTypeException(
-                key = key,
-                expectedType = "string",
-                actualType = value::class.simpleName ?: "unknown",
-            )
-        } else {
+        if (store.isExpired(key)) {
             store.removeKey(key)
             return null
         }
+        val value = store.data[key] ?: return null
+        if (value is ByteArray) {
+            return value
+        }
+        throw WrongTypeException(
+            key = key,
+            expectedType = "string",
+            actualType = value::class.simpleName ?: "unknown",
+        )
     }
 
     fun set(key: String, value: ByteArray) {

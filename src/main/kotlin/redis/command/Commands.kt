@@ -9,6 +9,12 @@ import redis.command.key.PexpireCommand
 import redis.command.key.PttlCommand
 import redis.command.key.ScanCommand
 import redis.command.key.TtlCommand
+import redis.command.list.LLenCommand
+import redis.command.list.LPopCommand
+import redis.command.list.LPushCommand
+import redis.command.list.LRangeCommand
+import redis.command.list.RPopCommand
+import redis.command.list.RPushCommand
 import redis.command.server.DbSizeCommand
 import redis.command.server.EchoCommand
 import redis.command.server.FlushDbCommand
@@ -44,6 +50,12 @@ fun createCommands(ops: OperationsBundle): List<RedisCommand> =
         PersistCommand(ops.key),
         KeysCommand(ops.key),
         ScanCommand(ops.key),
+        LPushCommand(ops.list),
+        RPushCommand(ops.list),
+        LPopCommand(ops.list),
+        RPopCommand(ops.list),
+        LRangeCommand(ops.list),
+        LLenCommand(ops.list),
         DbSizeCommand(ops.server),
         FlushDbCommand(ops.server),
         PingCommand(),
