@@ -12,6 +12,12 @@ import redis.command.set.SCardCommand
 import redis.command.set.SIsMemberCommand
 import redis.command.set.SMembersCommand
 import redis.command.set.SRemCommand
+import redis.command.zset.ZAddCommand
+import redis.command.zset.ZCardCommand
+import redis.command.zset.ZRangeCommand
+import redis.command.zset.ZRankCommand
+import redis.command.zset.ZRemCommand
+import redis.command.zset.ZScoreCommand
 import redis.command.key.ExistsCommand
 import redis.command.key.ExpireCommand
 import redis.command.key.KeysCommand
@@ -78,6 +84,12 @@ fun createCommands(ops: OperationsBundle): List<RedisCommand> =
         SMembersCommand(ops.set),
         SIsMemberCommand(ops.set),
         SCardCommand(ops.set),
+        ZAddCommand(ops.zset),
+        ZRemCommand(ops.zset),
+        ZScoreCommand(ops.zset),
+        ZRankCommand(ops.zset),
+        ZRangeCommand(ops.zset),
+        ZCardCommand(ops.zset),
         DbSizeCommand(ops.server),
         FlushDbCommand(ops.server),
         PingCommand(),

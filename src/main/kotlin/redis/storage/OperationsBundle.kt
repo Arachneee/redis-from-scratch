@@ -7,6 +7,7 @@ class OperationsBundle(
     val list: ListOperations,
     val hash: HashOperations,
     val set: SetOperations,
+    val zset: ZSetOperations,
 ) {
     companion object {
         fun create(clock: Clock = SystemClock): OperationsBundle {
@@ -18,6 +19,7 @@ class OperationsBundle(
                 list = ListOperations(store),
                 hash = HashOperations(store),
                 set = SetOperations(store),
+                zset = ZSetOperations(store),
             )
         }
     }
