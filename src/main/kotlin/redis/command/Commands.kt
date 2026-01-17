@@ -7,6 +7,8 @@ import redis.command.hash.HGetCommand
 import redis.command.hash.HLenCommand
 import redis.command.hash.HSetCommand
 import redis.command.key.DeleteCommand
+import redis.command.key.RenameCommand
+import redis.command.key.TypeCommand
 import redis.command.set.SAddCommand
 import redis.command.set.SCardCommand
 import redis.command.set.SIsMemberCommand
@@ -44,7 +46,10 @@ import redis.command.string.IncrCommand
 import redis.command.string.MGetCommand
 import redis.command.string.MSetCommand
 import redis.command.string.SetCommand
+import redis.command.string.SetExCommand
 import redis.command.string.SetNxCommand
+import redis.command.string.AppendCommand
+import redis.command.string.StrlenCommand
 import redis.storage.OperationsBundle
 
 fun createCommands(ops: OperationsBundle): List<RedisCommand> =
@@ -52,6 +57,9 @@ fun createCommands(ops: OperationsBundle): List<RedisCommand> =
         GetCommand(ops.string),
         SetCommand(ops.string),
         SetNxCommand(ops.string),
+        SetExCommand(ops.string),
+        AppendCommand(ops.string),
+        StrlenCommand(ops.string),
         IncrCommand(ops.string),
         DecrCommand(ops.string),
         IncrByCommand(ops.string),
@@ -59,6 +67,8 @@ fun createCommands(ops: OperationsBundle): List<RedisCommand> =
         MGetCommand(ops.string),
         MSetCommand(ops.string),
         DeleteCommand(ops.key),
+        TypeCommand(ops.key),
+        RenameCommand(ops.key),
         ExistsCommand(ops.key),
         ExpireCommand(ops.key),
         PexpireCommand(ops.key),

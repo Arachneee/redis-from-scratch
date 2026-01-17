@@ -71,4 +71,44 @@ class StringOperations(
             store.expirationTimes.remove(key)
         }
     }
+
+    fun append(
+        key: String,
+        value: ByteArray,
+    ): Long {
+        if (store.isExpired(key)) {
+            store.removeKey(key)
+        }
+        val existing = store.data[key]
+        if (existing == null) {
+            store.data[key] = value
+            return value.size.toLong()
+        }
+        if (existing !is ByteArray) {
+            throw WrongTypeException(
+                key = key,
+                expectedType = "string",
+                actualType = existing::class.simpleName ?: "unknown",
+            )
+        }
+        val newValue = existing + value
+        store.data[key] = newValue
+        return newValue.size.toLong()
+    }
+
+    fun strlen(key: String): Long {
+        if (store.isExpired(key)) {
+            store.removeKey(key)
+            return 0L
+        }
+        val value = store.data[key] ?: return 0L
+        if (value !is ByteArray) {
+            throw WrongTypeException(
+                key = key,
+                expectedType = "string",
+                actualType = value::class.simpleName ?: "unknown",
+            )
+        }
+        return value.size.toLong()
+    }
 }

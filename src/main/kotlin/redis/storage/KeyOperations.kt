@@ -3,6 +3,42 @@ package redis.storage
 class KeyOperations(
     private val store: RedisStore,
 ) {
+    fun type(key: String): String {
+        if (store.isExpired(key)) {
+            store.removeKey(key)
+            return "none"
+        }
+        val value = store.data[key] ?: return "none"
+        return when (value) {
+            is ByteArray -> "string"
+            is MutableList<*> -> "list"
+            is MutableSet<*> -> "set"
+            is MutableMap<*, *> -> "hash"
+            is ZSet -> "zset"
+            else -> "unknown"
+        }
+    }
+
+    fun rename(
+        key: String,
+        newKey: String,
+    ): Boolean {
+        if (store.isExpired(key)) {
+            store.removeKey(key)
+            return false
+        }
+        val value = store.data.remove(key) ?: return false
+        val expiration = store.expirationTimes.remove(key)
+
+        store.data[newKey] = value
+        if (expiration != null) {
+            store.expirationTimes[newKey] = expiration
+        } else {
+            store.expirationTimes.remove(newKey)
+        }
+        return true
+    }
+
     fun delete(key: String): Long {
         val removed = store.data.remove(key)
         store.expirationTimes.remove(key)
