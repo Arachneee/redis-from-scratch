@@ -1,5 +1,11 @@
 package redis.command
 
+import redis.command.hash.HDelCommand
+import redis.command.hash.HExistsCommand
+import redis.command.hash.HGetAllCommand
+import redis.command.hash.HGetCommand
+import redis.command.hash.HLenCommand
+import redis.command.hash.HSetCommand
 import redis.command.key.DeleteCommand
 import redis.command.key.ExistsCommand
 import redis.command.key.ExpireCommand
@@ -56,6 +62,12 @@ fun createCommands(ops: OperationsBundle): List<RedisCommand> =
         RPopCommand(ops.list),
         LRangeCommand(ops.list),
         LLenCommand(ops.list),
+        HSetCommand(ops.hash),
+        HGetCommand(ops.hash),
+        HDelCommand(ops.hash),
+        HExistsCommand(ops.hash),
+        HLenCommand(ops.hash),
+        HGetAllCommand(ops.hash),
         DbSizeCommand(ops.server),
         FlushDbCommand(ops.server),
         PingCommand(),
