@@ -7,6 +7,11 @@ import redis.command.hash.HGetCommand
 import redis.command.hash.HLenCommand
 import redis.command.hash.HSetCommand
 import redis.command.key.DeleteCommand
+import redis.command.set.SAddCommand
+import redis.command.set.SCardCommand
+import redis.command.set.SIsMemberCommand
+import redis.command.set.SMembersCommand
+import redis.command.set.SRemCommand
 import redis.command.key.ExistsCommand
 import redis.command.key.ExpireCommand
 import redis.command.key.KeysCommand
@@ -68,6 +73,11 @@ fun createCommands(ops: OperationsBundle): List<RedisCommand> =
         HExistsCommand(ops.hash),
         HLenCommand(ops.hash),
         HGetAllCommand(ops.hash),
+        SAddCommand(ops.set),
+        SRemCommand(ops.set),
+        SMembersCommand(ops.set),
+        SIsMemberCommand(ops.set),
+        SCardCommand(ops.set),
         DbSizeCommand(ops.server),
         FlushDbCommand(ops.server),
         PingCommand(),

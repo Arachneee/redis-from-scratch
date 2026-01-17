@@ -6,6 +6,7 @@ class OperationsBundle(
     val server: ServerOperations,
     val list: ListOperations,
     val hash: HashOperations,
+    val set: SetOperations,
 ) {
     companion object {
         fun create(clock: Clock = SystemClock): OperationsBundle {
@@ -16,6 +17,7 @@ class OperationsBundle(
                 server = ServerOperations(store),
                 list = ListOperations(store),
                 hash = HashOperations(store),
+                set = SetOperations(store),
             )
         }
     }
