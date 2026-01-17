@@ -5,13 +5,13 @@ import io.netty.channel.socket.SocketChannel
 import redis.command.CommandRegistry
 import redis.protocol.RedisProtocolDecoder
 import redis.protocol.RedisProtocolEncoder
-import redis.storage.RedisRepository
+import redis.storage.OperationsBundle
 
 class RedisServerInitializer(
-    repository: RedisRepository,
+    ops: OperationsBundle,
 ) : ChannelInitializer<SocketChannel>() {
     private val encoder = RedisProtocolEncoder()
-    private val commandRegistry = CommandRegistry(repository)
+    private val commandRegistry = CommandRegistry(ops)
     private val commandHandler = RedisCommandHandler(commandRegistry)
 
     override fun initChannel(ch: SocketChannel) {

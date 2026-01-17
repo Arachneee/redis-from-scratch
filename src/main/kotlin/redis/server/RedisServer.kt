@@ -13,13 +13,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import org.slf4j.LoggerFactory
 import redis.config.RedisConfig
 import redis.storage.KeyExpirationScheduler
-import redis.storage.RedisRepository
+import redis.storage.OperationsBundle
 import java.util.concurrent.TimeUnit
 
 class RedisServer(
     private val config: RedisConfig = RedisConfig(),
-    private val repository: RedisRepository = RedisRepository(),
-    private val keyExpirationScheduler: KeyExpirationScheduler = KeyExpirationScheduler(repository, config),
+    private val ops: OperationsBundle = OperationsBundle.create(),
+    private val keyExpirationScheduler: KeyExpirationScheduler = KeyExpirationScheduler(ops.key, config),
 ) {
     private val logger = LoggerFactory.getLogger(RedisServer::class.java)
 
@@ -40,7 +40,7 @@ class RedisServer(
                 .option(ChannelOption.SO_BACKLOG, config.soBacklog)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childOption(ChannelOption.TCP_NODELAY, true)
-                .childHandler(RedisServerInitializer(repository))
+                .childHandler(RedisServerInitializer(ops))
 
             channel = bootstrap.bind(config.port).sync().channel()
             logger.info("Redis server started on port ${config.port}")

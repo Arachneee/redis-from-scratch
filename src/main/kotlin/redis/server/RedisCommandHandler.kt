@@ -6,6 +6,7 @@ import io.netty.channel.SimpleChannelInboundHandler
 import org.slf4j.LoggerFactory
 import redis.command.CommandRegistry
 import redis.error.RedisErrors
+import redis.error.WrongTypeException
 import redis.protocol.RESPValue
 
 @Sharable
@@ -23,10 +24,14 @@ class RedisCommandHandler(
         if (msg is RESPValue.Array) {
             val commandName = msg.getCommand()
             val response =
-                commandName
-                    ?.let { commandRegistry.find(it) }
-                    ?.execute(msg.elements ?: emptyList())
-                    ?: RedisErrors.unknownCommand(commandName)
+                try {
+                    commandName
+                        ?.let { commandRegistry.find(it) }
+                        ?.execute(msg.elements ?: emptyList())
+                        ?: RedisErrors.unknownCommand(commandName)
+                } catch (e: WrongTypeException) {
+                    RedisErrors.wrongType()
+                }
             ctx.writeAndFlush(response)
         }
     }

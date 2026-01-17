@@ -1,14 +1,15 @@
 package redis.command
 
-import redis.storage.RedisRepository
+import redis.command.server.CommandCommand
+import redis.storage.OperationsBundle
 
 class CommandRegistry(
-    repository: RedisRepository,
+    ops: OperationsBundle,
 ) {
     private val commands: Map<String, RedisCommand>
 
     init {
-        val baseCommands = createCommands(repository)
+        val baseCommands = createCommands(ops)
         val commandCommand = CommandCommand { commands.values.toList() }
         commands = (baseCommands + commandCommand).associateBy { it.name }
     }
