@@ -1,15 +1,14 @@
-package redis.server
+package redis.command
 
-import io.netty.channel.ChannelHandler.Sharable
+import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import org.slf4j.LoggerFactory
-import redis.command.CommandRegistry
 import redis.error.RedisErrors
 import redis.error.WrongTypeException
 import redis.protocol.RESPValue
 
-@Sharable
+@ChannelHandler.Sharable
 class RedisCommandHandler(
     private val commandRegistry: CommandRegistry,
 ) : SimpleChannelInboundHandler<RESPValue>() {

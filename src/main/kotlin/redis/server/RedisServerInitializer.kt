@@ -2,11 +2,14 @@ package redis.server
 
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
+import redis.aof.AofHandler
+import redis.aof.AofManager
 import redis.command.CommandRegistry
+import redis.command.RedisCommandHandler
+import redis.config.RedisConfig
 import redis.protocol.RedisProtocolDecoder
 import redis.protocol.RedisProtocolEncoder
 import redis.storage.OperationsBundle
-import redis.config.RedisConfig
 
 class RedisServerInitializer(
     ops: OperationsBundle,
@@ -26,4 +29,3 @@ class RedisServerInitializer(
         }
     }
 }
-

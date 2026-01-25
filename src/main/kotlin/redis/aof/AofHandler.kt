@@ -1,4 +1,4 @@
-package redis.server
+package redis.aof
 
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext

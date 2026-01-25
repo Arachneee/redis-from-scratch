@@ -11,6 +11,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import org.slf4j.LoggerFactory
+import redis.aof.AofManager
 import redis.config.RedisConfig
 import redis.storage.KeyExpirationScheduler
 import redis.storage.OperationsBundle

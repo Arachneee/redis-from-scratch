@@ -1,4 +1,4 @@
-package redis.server
+package redis.aof
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,19 +30,20 @@ class AofManager(
     }
 
     private fun startWriter() {
-        writerJob = scope.launch {
-            for (command in commandChannel) {
-                try {
-                    val bytes = command.toRESP()
-                    val buffer = ByteBuffer.wrap(bytes)
-                    while (buffer.hasRemaining()) {
-                        fileChannel.write(buffer)
+        writerJob =
+            scope.launch {
+                for (command in commandChannel) {
+                    try {
+                        val bytes = command.toRESP()
+                        val buffer = ByteBuffer.wrap(bytes)
+                        while (buffer.hasRemaining()) {
+                            fileChannel.write(buffer)
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Failed to write to AOF", e)
                     }
-                } catch (e: Exception) {
-                    logger.error("Failed to write to AOF", e)
                 }
             }
-        }
     }
 
     fun append(command: RESPValue) {
