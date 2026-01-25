@@ -40,7 +40,7 @@ class RedisServer(
                 .option(ChannelOption.SO_BACKLOG, config.soBacklog)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childOption(ChannelOption.TCP_NODELAY, true)
-                .childHandler(RedisServerInitializer(ops))
+                .childHandler(RedisServerInitializer(ops, config))
 
             channel = bootstrap.bind(config.port).sync().channel()
             logger.info("Redis server started on port ${config.port}")
