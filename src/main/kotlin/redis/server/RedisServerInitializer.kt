@@ -11,11 +11,11 @@ import redis.config.RedisConfig
 class RedisServerInitializer(
     ops: OperationsBundle,
     private val config: RedisConfig,
+    private val aofManager: AofManager,
 ) : ChannelInitializer<SocketChannel>() {
     private val encoder = RedisProtocolEncoder()
     private val commandRegistry = CommandRegistry(ops)
     private val commandHandler = RedisCommandHandler(commandRegistry)
-    private val aofManager = AofManager(config.aofFilename)
 
     override fun initChannel(ch: SocketChannel) {
         ch.pipeline().apply {
@@ -26,3 +26,4 @@ class RedisServerInitializer(
         }
     }
 }
+

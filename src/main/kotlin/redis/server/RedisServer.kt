@@ -29,6 +29,7 @@ class RedisServer(
     private val serverChannelClass: Class<out ServerSocketChannel> =
         if (useEpoll) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java
     private var channel: Channel? = null
+    private val aofManager = AofManager(config.aofFilename)
 
     fun start() {
         logger.info("Using ${if (useEpoll) "Epoll" else "NIO"} transport (single-threaded)")
@@ -40,7 +41,7 @@ class RedisServer(
                 .option(ChannelOption.SO_BACKLOG, config.soBacklog)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childOption(ChannelOption.TCP_NODELAY, true)
-                .childHandler(RedisServerInitializer(ops, config))
+                .childHandler(RedisServerInitializer(ops, config, aofManager))
 
             channel = bootstrap.bind(config.port).sync().channel()
             logger.info("Redis server started on port ${config.port}")
@@ -68,6 +69,7 @@ class RedisServer(
                 config.shutdownTimeoutMs,
                 TimeUnit.MILLISECONDS,
             ).sync()
+        aofManager.close()
         logger.info("Redis server stopped")
     }
 
