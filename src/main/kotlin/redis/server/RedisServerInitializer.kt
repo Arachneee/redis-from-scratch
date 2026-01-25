@@ -18,6 +18,7 @@ class RedisServerInitializer(
         ch.pipeline().apply {
             addLast(RedisProtocolDecoder())
             addLast(encoder)
+            addLast(AofHandler())
             addLast(commandHandler)
         }
     }

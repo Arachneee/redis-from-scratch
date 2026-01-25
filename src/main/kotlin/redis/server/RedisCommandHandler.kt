@@ -19,8 +19,6 @@ class RedisCommandHandler(
         ctx: ChannelHandlerContext,
         msg: RESPValue,
     ) {
-        logger.debug("Received: {}", msg)
-
         if (msg is RESPValue.Array) {
             val commandName = msg.getCommand()
             val response =
@@ -32,6 +30,7 @@ class RedisCommandHandler(
                 } catch (e: WrongTypeException) {
                     RedisErrors.wrongType()
                 }
+
             ctx.writeAndFlush(response)
         }
     }
