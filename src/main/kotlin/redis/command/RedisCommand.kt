@@ -26,4 +26,14 @@ interface RedisCommand {
                 RESPValue.Integer(step.toLong()),
             ),
         )
+
+    companion object {
+        const val FLAG_WRITE = "write"
+        const val FLAG_READONLY = "readonly"
+        const val FLAG_DENYOOM = "denyoom"
+        const val FLAG_FAST = "fast"
+        const val FLAG_LOADING = "loading"
+        const val FLAG_STALE = "stale"
+        const val FLAG_SORT_FOR_SCRIPT = "sort_for_script"
+    }
 }

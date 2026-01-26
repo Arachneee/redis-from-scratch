@@ -9,7 +9,7 @@ class DbSizeCommand(
 ) : RedisCommand {
     override val name: String = "DBSIZE"
     override val arity: Int = 1
-    override val flags: List<String> = listOf("readonly", "fast")
+    override val flags: List<String> = listOf(RedisCommand.FLAG_READONLY, RedisCommand.FLAG_FAST)
     override val firstKey: Int = 0
     override val lastKey: Int = 0
     override val step: Int = 0

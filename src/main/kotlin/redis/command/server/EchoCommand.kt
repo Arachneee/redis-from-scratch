@@ -6,7 +6,7 @@ import redis.protocol.RESPValue
 class EchoCommand : RedisCommand {
     override val name: String = "ECHO"
     override val arity: Int = 2
-    override val flags: List<String> = listOf("fast")
+    override val flags: List<String> = listOf(RedisCommand.FLAG_FAST)
     override val firstKey: Int = 0
     override val lastKey: Int = 0
     override val step: Int = 0

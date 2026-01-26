@@ -10,7 +10,7 @@ class ZRangeCommand(
 ) : RedisCommand {
     override val name: String = "ZRANGE"
     override val arity: Int = 4
-    override val flags: List<String> = listOf("readonly")
+    override val flags: List<String> = listOf(RedisCommand.FLAG_READONLY)
     override val firstKey: Int = 1
     override val lastKey: Int = 1
     override val step: Int = 1

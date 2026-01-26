@@ -10,7 +10,7 @@ class CommandCommand(
 ) : RedisCommand {
     override val name: String = "COMMAND"
     override val arity: Int = -1
-    override val flags: List<String> = listOf("readonly", "loading", "stale")
+    override val flags: List<String> = listOf(RedisCommand.FLAG_READONLY, RedisCommand.FLAG_LOADING, RedisCommand.FLAG_STALE)
     override val firstKey: Int = 0
     override val lastKey: Int = 0
     override val step: Int = 0

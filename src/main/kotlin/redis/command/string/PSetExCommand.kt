@@ -12,7 +12,7 @@ class PSetExCommand(
 ) : RedisCommand {
     override val name: String = NAME
     override val arity: Int = 4
-    override val flags: List<String> = listOf("write", "denyoom")
+    override val flags: List<String> = listOf(RedisCommand.FLAG_WRITE, RedisCommand.FLAG_DENYOOM)
     override val firstKey: Int = 1
     override val lastKey: Int = 1
     override val step: Int = 1

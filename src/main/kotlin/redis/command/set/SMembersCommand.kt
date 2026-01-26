@@ -10,7 +10,7 @@ class SMembersCommand(
 ) : RedisCommand {
     override val name: String = "SMEMBERS"
     override val arity: Int = 2
-    override val flags: List<String> = listOf("readonly", "sort_for_script")
+    override val flags: List<String> = listOf(RedisCommand.FLAG_READONLY, RedisCommand.FLAG_SORT_FOR_SCRIPT)
     override val firstKey: Int = 1
     override val lastKey: Int = 1
     override val step: Int = 1

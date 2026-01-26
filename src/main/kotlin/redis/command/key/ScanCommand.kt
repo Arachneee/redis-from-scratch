@@ -11,7 +11,7 @@ class ScanCommand(
 ) : RedisCommand {
     override val name: String = "SCAN"
     override val arity: Int = -2
-    override val flags: List<String> = listOf("readonly")
+    override val flags: List<String> = listOf(RedisCommand.FLAG_READONLY)
     override val firstKey: Int = 0
     override val lastKey: Int = 0
     override val step: Int = 0

@@ -9,7 +9,7 @@ class FlushDbCommand(
 ) : RedisCommand {
     override val name: String = "FLUSHDB"
     override val arity: Int = 1
-    override val flags: List<String> = listOf("write")
+    override val flags: List<String> = listOf(RedisCommand.FLAG_WRITE)
     override val firstKey: Int = 0
     override val lastKey: Int = 0
     override val step: Int = 0
