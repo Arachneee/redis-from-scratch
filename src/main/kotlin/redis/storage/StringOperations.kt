@@ -36,6 +36,11 @@ class StringOperations(
         store.setExpiration(key, ttlMillis)
     }
 
+    fun setWithExpirationAtMillis(key: String, value: ByteArray, expirationMillis: Long) {
+        store.data[key] = value
+        store.setExpirationAt(key, expirationMillis)
+    }
+
     fun incr(key: String): Result<Long> = incrBy(key, 1)
 
     fun decr(key: String): Result<Long> = incrBy(key, -1)

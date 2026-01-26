@@ -29,7 +29,7 @@ class AofManager(
     private val file = File(filename)
 
     private val pendingCommands = ConcurrentLinkedQueue<RESPValue>()
-    private val fileChannel: FileChannel
+    private val fileChannel: FileChannel = FileOutputStream(file, true).channel
     private val out = ByteArrayOutputStream()
     private val batch = mutableListOf<RESPValue>()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -37,7 +37,6 @@ class AofManager(
     private lateinit var writerJob: Job
 
     init {
-        fileChannel = FileOutputStream(file, true).channel
         startWriter()
     }
 

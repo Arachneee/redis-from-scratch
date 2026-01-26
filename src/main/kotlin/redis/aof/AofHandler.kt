@@ -6,6 +6,7 @@ import io.netty.channel.ChannelPromise
 import org.slf4j.LoggerFactory
 import redis.command.CommandRegistry
 import redis.protocol.RESPValue
+import java.lang.Compiler.command
 import java.util.ArrayDeque
 
 class AofHandler(
@@ -20,7 +21,8 @@ class AofHandler(
         msg: Any,
     ) {
         if (msg is RESPValue) {
-            commandQueue.add(msg)
+            val command = RelativeTimeCommandConverter.transform(msg)
+            commandQueue.add(command)
             ctx.fireChannelRead(msg)
         } else {
             ctx.fireChannelRead(msg)

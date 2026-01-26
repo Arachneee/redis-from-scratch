@@ -63,6 +63,14 @@ class KeyOperations(
         return 1
     }
 
+    fun expireAt(key: String, millis: Long): Long {
+        if (!store.containsKey(key)) return 0
+        if (millis <= store.clock.currentTimeMillis()) return delete(key)
+
+        store.setExpirationAt(key, millis)
+        return 1
+    }
+
     fun ttl(key: String): Long {
         val expireAt = store.expirationTimes[key]
         if (!store.containsKey(key)) return RedisStore.KEY_NOT_EXISTS

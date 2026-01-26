@@ -8,7 +8,7 @@ import redis.storage.KeyOperations
 class PexpireCommand(
     private val keyOps: KeyOperations,
 ) : RedisCommand {
-    override val name: String = "PEXPIRE"
+    override val name: String = NAME
     override val arity: Int = 3
     override val flags: List<String> = listOf("write", "fast")
     override val firstKey: Int = 1
@@ -19,5 +19,9 @@ class PexpireCommand(
         val key = args.getStringAt(1) ?: return wrongArgsError()
         val millis = args.getStringAt(2)?.toLongOrNull() ?: return wrongArgsError()
         return RESPValue.Integer(keyOps.pexpire(key, millis))
+    }
+
+    companion object {
+        const val NAME = "PEXPIRE"
     }
 }

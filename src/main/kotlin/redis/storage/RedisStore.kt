@@ -20,6 +20,10 @@ class RedisStore(
         expirationTimes[key] = ttlMillis + clock.currentTimeMillis()
     }
 
+    fun setExpirationAt(key: String, expirationMillis: Long) {
+        expirationTimes[key] = expirationMillis
+    }
+
     fun containsKey(key: String): Boolean = data.containsKey(key)
 
     fun size(): Long = data.size.toLong()

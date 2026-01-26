@@ -21,9 +21,11 @@ import redis.command.zset.ZRankCommand
 import redis.command.zset.ZRemCommand
 import redis.command.zset.ZScoreCommand
 import redis.command.key.ExistsCommand
+import redis.command.key.ExpireAtCommand
 import redis.command.key.ExpireCommand
 import redis.command.key.KeysCommand
 import redis.command.key.PersistCommand
+import redis.command.key.PexpireAtCommand
 import redis.command.key.PexpireCommand
 import redis.command.key.PttlCommand
 import redis.command.key.ScanCommand
@@ -49,6 +51,8 @@ import redis.command.string.SetCommand
 import redis.command.string.SetExCommand
 import redis.command.string.SetNxCommand
 import redis.command.string.AppendCommand
+import redis.command.string.GetExCommand
+import redis.command.string.PSetExCommand
 import redis.command.string.StrlenCommand
 import redis.storage.OperationsBundle
 
@@ -58,6 +62,8 @@ fun createCommands(ops: OperationsBundle): List<RedisCommand> =
         SetCommand(ops.string),
         SetNxCommand(ops.string),
         SetExCommand(ops.string),
+        PSetExCommand(ops.string),
+        GetExCommand(ops.string, ops.key),
         AppendCommand(ops.string),
         StrlenCommand(ops.string),
         IncrCommand(ops.string),
@@ -71,7 +77,9 @@ fun createCommands(ops: OperationsBundle): List<RedisCommand> =
         RenameCommand(ops.key),
         ExistsCommand(ops.key),
         ExpireCommand(ops.key),
+        ExpireAtCommand(ops.key),
         PexpireCommand(ops.key),
+        PexpireAtCommand(ops.key),
         TtlCommand(ops.key),
         PttlCommand(ops.key),
         PersistCommand(ops.key),
