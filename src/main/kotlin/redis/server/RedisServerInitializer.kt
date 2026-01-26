@@ -9,15 +9,13 @@ import redis.command.RedisCommandHandler
 import redis.config.RedisConfig
 import redis.protocol.RedisProtocolDecoder
 import redis.protocol.RedisProtocolEncoder
-import redis.storage.OperationsBundle
 
 class RedisServerInitializer(
-    ops: OperationsBundle,
+    private val commandRegistry: CommandRegistry,
     private val config: RedisConfig,
     private val aofManager: AofManager,
 ) : ChannelInitializer<SocketChannel>() {
     private val encoder = RedisProtocolEncoder()
-    private val commandRegistry = CommandRegistry(ops)
     private val commandHandler = RedisCommandHandler(commandRegistry)
 
     override fun initChannel(ch: SocketChannel) {

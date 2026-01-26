@@ -11,7 +11,6 @@ class RedisProtocolDecoder : ByteToMessageDecoder() {
         out: MutableList<Any>,
     ) {
         while (buffer.isReadable) {
-            val startIndex = buffer.readerIndex()
             buffer.markReaderIndex()
 
             val result = RESPParser.parse(buffer)

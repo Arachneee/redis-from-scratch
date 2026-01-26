@@ -1,5 +1,7 @@
 package redis.aof
 
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,6 +14,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import redis.protocol.RESPValue
+import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -23,6 +26,7 @@ class AofManager(
     filename: String,
 ) {
     private val logger = LoggerFactory.getLogger(AofManager::class.java)
+    private val file = File(filename)
 
     private val pendingCommands = ConcurrentLinkedQueue<RESPValue>()
     private val fileChannel: FileChannel
@@ -33,7 +37,6 @@ class AofManager(
     private lateinit var writerJob: Job
 
     init {
-        val file = File(filename)
         fileChannel = FileOutputStream(file, true).channel
         startWriter()
     }
@@ -91,5 +94,10 @@ class AofManager(
             flush()
         }
         fileChannel.close()
+    }
+
+    fun readAof(): BufferedInputStream? {
+        if (!file.exists() || file.length() == 0L) return null
+        return file.inputStream().buffered()
     }
 }
