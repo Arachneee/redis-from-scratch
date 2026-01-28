@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
+import redis.config.RedisConfig
 import redis.protocol.RESPValue
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
@@ -23,9 +24,11 @@ import java.nio.channels.FileChannel
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class AofManager(
-    filename: String,
+    private val config: RedisConfig,
+    private val snapshotProvider: () -> List<RESPValue>,
 ) {
     private val logger = LoggerFactory.getLogger(AofManager::class.java)
+    private val filename = config.aofFilename
     private val file = File(filename)
 
     private val pendingCommands = ConcurrentLinkedQueue<RESPValue>()
@@ -39,8 +42,12 @@ class AofManager(
     @Volatile
     private var isRewriting = false
 
+    @Volatile
+    private var baseSize: Long = file.length()
+
     init {
         startWriter()
+        startAutoRewriteChecker()
     }
 
     private fun startWriter() {
@@ -55,6 +62,37 @@ class AofManager(
                     }
                 }
             }
+    }
+
+    private fun startAutoRewriteChecker() {
+        scope.launch {
+            while (isActive) {
+                try {
+                    delay(config.aofCheckIntervalMs)
+                    if (isRewriting) continue
+
+                    val currentSize = file.length()
+                    val minSize = config.aofRewriteMinSize
+                    val percentage = config.aofRewritePercentage
+
+                    val shouldRewrite = currentSize >= minSize &&
+                        (baseSize == 0L || (currentSize - baseSize) * 100 / baseSize >= percentage)
+
+                    if (shouldRewrite) {
+                        logger.info("Triggering automatic AOF rewrite (current size: $currentSize, base size: $baseSize)")
+                        val snapshot = try {
+                            snapshotProvider()
+                        } catch (e: Exception) {
+                            logger.error("Failed to provide snapshot for auto-rewrite", e)
+                            null
+                        }
+                        snapshot?.let { startRewrite(it) }
+                    }
+                } catch (e: Exception) {
+                    logger.error("Error in AOF auto-rewrite checker", e)
+                }
+            }
+        }
     }
 
     fun append(command: RESPValue) {
@@ -104,6 +142,7 @@ class AofManager(
     }
 
     fun startRewrite(snapshotCommands: List<RESPValue>) {
+        if (isRewriting) return
         isRewriting = true
         logger.info("Starting background AOF rewrite")
 
@@ -128,9 +167,10 @@ class AofManager(
                     }
 
                     fileChannel = FileOutputStream(file, true).channel
+                    baseSize = file.length()
                     isRewriting = false
                 }
-                logger.info("AOF rewrite completed successfully")
+                logger.info("AOF rewrite completed successfully. New base size: $baseSize")
             } catch (e: Exception) {
                 logger.error("AOF rewrite failed", e)
                 isRewriting = false

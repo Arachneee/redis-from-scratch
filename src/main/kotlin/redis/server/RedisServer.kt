@@ -15,6 +15,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.resolver.HostsFileEntriesProvider.parser
 import org.slf4j.LoggerFactory
 import redis.aof.AofManager
+import redis.aof.AofRewriteService
 import redis.command.CommandRegistry
 import redis.config.RedisConfig
 import redis.error.RedisErrors
@@ -23,7 +24,7 @@ import redis.protocol.RESPParser
 import redis.protocol.RESPValue
 import redis.storage.KeyExpirationScheduler
 import redis.storage.OperationsBundle
-import java.lang.Compiler.command
+import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -40,7 +41,11 @@ class RedisServer(
     private val serverChannelClass: Class<out ServerSocketChannel> =
         if (useEpoll) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java
     private var channel: Channel? = null
-    private val aofManager = AofManager(config.aofFilename)
+    private val aofManager = AofManager(config) {
+        workerGroup.submit(Callable {
+            AofRewriteService.generateRewriteCommands(ops.aof)
+        }).get()
+    }
     private val commandRegistry = CommandRegistry(ops, aofManager)
     private val isShuttingDown = AtomicBoolean(false)
 
