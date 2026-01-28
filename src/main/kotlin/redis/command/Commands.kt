@@ -1,5 +1,7 @@
 package redis.command
 
+import redis.aof.AofManager
+import redis.aof.BGRewriteAofCommand
 import redis.command.hash.HDelCommand
 import redis.command.hash.HExistsCommand
 import redis.command.hash.HGetAllCommand
@@ -56,8 +58,9 @@ import redis.command.string.PSetExCommand
 import redis.command.string.StrlenCommand
 import redis.storage.OperationsBundle
 
-fun createCommands(ops: OperationsBundle): List<RedisCommand> =
+fun createCommands(ops: OperationsBundle, aofManager: AofManager): List<RedisCommand> =
     listOf(
+        BGRewriteAofCommand(ops.aof, aofManager),
         GetCommand(ops.string),
         SetCommand(ops.string),
         SetNxCommand(ops.string),

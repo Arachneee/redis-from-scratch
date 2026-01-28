@@ -40,7 +40,7 @@ class AofHandler(
 
             val isReadOnly = commandRegistry.find(commandName)?.flags?.contains("readonly") == true
 
-            if (msg !is RESPValue.Error && command != null && !isReadOnly) {
+            if (msg !is RESPValue.Error && command != null && !isReadOnly && commandName != BGRewriteAofCommand.NAME) {
                 try {
                     aofManager.append(command)
                 } catch (e: Exception) {

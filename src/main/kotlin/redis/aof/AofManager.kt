@@ -29,12 +29,15 @@ class AofManager(
     private val file = File(filename)
 
     private val pendingCommands = ConcurrentLinkedQueue<RESPValue>()
-    private val fileChannel: FileChannel = FileOutputStream(file, true).channel
+    private var fileChannel: FileChannel = FileOutputStream(file, true).channel
     private val out = ByteArrayOutputStream()
     private val batch = mutableListOf<RESPValue>()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val mutex = Mutex()
     private lateinit var writerJob: Job
+
+    @Volatile
+    private var isRewriting = false
 
     init {
         startWriter()
@@ -60,7 +63,7 @@ class AofManager(
 
     private suspend fun flush() {
         mutex.withLock {
-            if (pendingCommands.isEmpty()) return@withLock
+            if (isRewriting || pendingCommands.isEmpty()) return@withLock
 
             batch.clear()
             while (pendingCommands.isNotEmpty()) {
@@ -98,5 +101,40 @@ class AofManager(
     fun readAof(): BufferedInputStream? {
         if (!file.exists() || file.length() == 0L) return null
         return file.inputStream().buffered()
+    }
+
+    fun startRewrite(snapshotCommands: List<RESPValue>) {
+        isRewriting = true
+        logger.info("Starting background AOF rewrite")
+
+        scope.launch {
+            try {
+                val tempFile = File("${file.absolutePath}.temp")
+                val tempChannel = FileOutputStream(tempFile).channel
+
+                snapshotCommands.forEach { cmd ->
+                    val buf = ByteBuffer.wrap(cmd.toRESP())
+                    while (buf.hasRemaining()) {
+                        tempChannel.write(buf)
+                    }
+                }
+                tempChannel.force(false)
+                tempChannel.close()
+
+                mutex.withLock {
+                    fileChannel.close()
+                    if (!tempFile.renameTo(file)) {
+                        throw IllegalStateException("Failed to rename temp AOF file")
+                    }
+
+                    fileChannel = FileOutputStream(file, true).channel
+                    isRewriting = false
+                }
+                logger.info("AOF rewrite completed successfully")
+            } catch (e: Exception) {
+                logger.error("AOF rewrite failed", e)
+                isRewriting = false
+            }
+        }
     }
 }

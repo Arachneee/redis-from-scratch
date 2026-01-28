@@ -41,7 +41,7 @@ class RedisServer(
         if (useEpoll) EpollServerSocketChannel::class.java else NioServerSocketChannel::class.java
     private var channel: Channel? = null
     private val aofManager = AofManager(config.aofFilename)
-    private val commandRegistry = CommandRegistry(ops)
+    private val commandRegistry = CommandRegistry(ops, aofManager)
     private val isShuttingDown = AtomicBoolean(false)
 
     fun start() {
